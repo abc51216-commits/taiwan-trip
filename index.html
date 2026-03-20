@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRIPLE Pro - 雙時間選單版</title>
+    <title>TRIPLE Pro - 環島訂房強化版</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
@@ -85,7 +85,7 @@
                                 <option value="🏨 住宿">🏨 住宿</option>
                             </select>
                         </div>
-                        <div class="mb-3"><label class="small fw-bold">地點 / 車次</label><input type="text" id="place" class="form-control" placeholder="例：台北車站" required></div>
+                        <div class="mb-3"><label class="small fw-bold">地點 / 飯店名稱</label><input type="text" id="place" class="form-control" placeholder="例：台東知本老爺酒店" required></div>
                         <div class="mb-4"><label class="small fw-bold">備註</label><textarea id="note" class="form-control" rows="1"></textarea></div>
                         <button type="submit" class="btn btn-primary w-100 fw-bold py-2">加入行程</button>
                     </form>
@@ -109,7 +109,7 @@
 
     <script>
         // 使用新鑰匙確保不會讀到舊錯誤資料
-        let tripData = JSON.parse(localStorage.getItem("myTripData_DualTime")) || { "第 1 天": [] };
+        let tripData = JSON.parse(localStorage.getItem("myTripData_v5")) || { "第 1 天": [] };
         let currentDay = Object.keys(tripData)[0];
 
         function initTimeSelects() {
@@ -135,7 +135,7 @@
 
         function switchDay(day) { currentDay = day; document.getElementById("currentDayTitle").innerText = `🗓️ ${day} 行程`; renderTabs(); renderTimeline(); }
         function addNewDay() { const n = Object.keys(tripData).length + 1; tripData[`第 ${n} 天`] = []; saveData(); switchDay(`第 ${n} 天`); }
-        function saveData() { localStorage.setItem("myTripData_DualTime", JSON.stringify(tripData)); }
+        function saveData() { localStorage.setItem("myTripData_v5", JSON.stringify(tripData)); }
 
         document.getElementById("itineraryForm").addEventListener("submit", function(e) {
             e.preventDefault();
@@ -145,23 +145,12 @@
             const pla = document.getElementById("place").value;
             const not = document.getElementById("note").value;
 
-            // ✨ 計算時間差 (分鐘)
             const [h1, m1] = startVal.split(':').map(Number);
             const [h2, m2] = endVal.split(':').map(Number);
             let totalMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
-            
-            // 如果結束時間早於開始時間，視為跨隔天
             if (totalMinutes < 0) totalMinutes += 24 * 60;
 
-            tripData[currentDay].push({ 
-                id: Date.now(), 
-                time: startVal, 
-                endTime: endVal, 
-                category: cat, 
-                place: pla, 
-                duration: totalMinutes, 
-                note: not 
-            });
+            tripData[currentDay].push({ id: Date.now(), time: startVal, endTime: endVal, category: cat, place: pla, duration: totalMinutes, note: not });
             tripData[currentDay].sort((a,b) => a.time.localeCompare(b.time));
             saveData(); 
             renderTimeline();
@@ -185,6 +174,7 @@
                 let icon = isTrans ? "🚆" : (item.category.includes("景點") ? "📸" : (item.category.includes("餐廳") ? "🍽️" : "🏨"));
                 let color = isTrans ? "bg-transport" : (item.category.includes("景點") ? "bg-spot" : (item.category.includes("餐廳") ? "bg-food" : "bg-hotel"));
                 
+                // ✨ 修正後的連結 (確保包含 $ 符號)
                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.place)}`;
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place)}`;
                 const agodaUrl = `https://www.agoda.com/zh-tw/search?query=${encodeURIComponent(item.place)}`;
