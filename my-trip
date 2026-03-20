@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRIPLE Pro - 鐵路環島行程規劃</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body { 
+            background-color: #f0f9ff;
+            background-image: linear-gradient(120deg, #e0f2fe 0%, #fff 100%);
+            font-family: 'PingFang TC', '微軟正黑體', sans-serif; 
+            color: #334155;
+            padding-top: 75px;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        }
+        .navbar-brand { font-weight: 800; color: #0ea5e9 !important; font-size: 1.25rem; display: flex; align-items: center; gap: 8px; }
+        .brand-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #0ea5e9 0%, #2dd4bf 100%); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .nav-link-custom { color: #475569; font-weight: 600; font-size: 0.9rem; }
+        
+        .card { background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 8px 16px rgba(149, 157, 165, 0.05); }
+        .nav-tabs { border-bottom: none; gap: 0.3rem; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .nav-tabs .nav-link { border-radius: 20px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 15px; color: #475569; font-weight: bold; font-size: 0.85rem; white-space: nowrap; }
+        .nav-tabs .nav-link.active { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+
+        .timeline { border-left: 3px solid #bae6fd; padding-left: 25px; margin-left: 15px; position: relative; }
+        .timeline-item { margin-bottom: 25px; position: relative; }
+        .timeline-icon { position: absolute; left: -42px; top: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; z-index: 1; color: white; border: 2px solid white; box-shadow: 0 0 0 4px #f0f9ff; }
+        
+        /* 類別配色 */
+        .transport-item .timeline-icon { background-color: #0369a1; }
+        .spot-item .timeline-icon { background-color: #15803d; }
+        .food-item .timeline-icon { background-color: #f97316; }
+        .hotel-item .timeline-icon { background-color: #a855f7; }
+
+        .time-badge { font-size: 1rem; font-weight: 800; color: #1e293b; }
+        .btn-primary { background: #0ea5e9; border: none; border-radius: 20px; }
+        .btn-success { background: #15803d; border: none; border-radius: 20px; }
+
+        @media print { .no-print, .navbar { display: none !important; } body { background-color: #fff; padding-top: 10px; } }
+        /* 手機版優化 */
+        @media (max-width: 768px) {
+            .timeline { margin-left: 10px; padding-left: 20px; }
+            .timeline-icon { left: -26px; width: 28px; height: 28px; font-size: 0.8rem; }
+            .sticky-top { position: relative !important; top: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg fixed-top no-print">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <div class="brand-icon">🚆</div>
+                <span>TRIPLE<span style="font-weight:300; font-size:0.9rem; color:#64748b; margin-left:5px;"> Taiwan</span></span>
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="dropdown me-2">
+                    <button class="btn btn-sm btn-link nav-link-custom dropdown-toggle text-decoration-none" type="button" data-bs-toggle="dropdown">
+                        🔗 交通查詢
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                        <li><a class="dropdown-item py-2" href="https://tip.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime" target="_blank">🕒 台鐵時刻表</a></li>
+                        <li><a class="dropdown-item py-2" href="https://www.thsrc.com.tw/" target="_blank">🚄 台灣高鐵</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2" href="https://www.taiwantrip.com.tw/" target="_blank">🚌 台灣好行</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="window.print()">🖨️</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <div class="row">
+            <div class="col-lg-5 no-print mb-4">
+                <div class="card p-4 sticky-top">
+                    <h5 class="mb-3 fw-bold text-primary">➕ 規劃行程</h5>
+                    <form id="itineraryForm">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="small fw-bold">開始時間</label>
+                                <select id="time" class="form-select"></select>
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold">花費(分)</label>
+                                <input type="number" id="duration" class="form-control" placeholder="60">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">分類</label>
+                            <select id="category" class="form-select">
+                                <option value="🚆 交通">🚆 交通</option>
+                                <option value="📸 景點">📸 景點</option>
+                                <option value="🍽️ 餐廳">🍽️ 餐廳</option>
+                                <option value="🏨 住宿">🏨 住宿</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">地點/車次</label>
+                            <input type="text" id="place" class="form-control" placeholder="例：台東車站">
+                        </div>
+                        <div class="mb-4">
+                            <label class="small fw-bold">備註</label>
+                            <textarea id="note" class="form-control" rows="1"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">加入行程</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <ul class="nav nav-tabs" id="dayTabs"></ul>
+                        <button class="btn btn-sm btn-success rounded-pill px-2 no-print" onclick="addNewDay()">➕天數</button>
+                    </div>
+                    <h5 class="fw-bold mb-4" id="currentDayTitle">🗓️ 第 1 天 行程</h5>
+                    <div id="timeline-container" class="timeline"></div>
+                    <div id="empty-state" class="text-center text-muted my-4">目前沒行程</div>
+                    <button class="btn btn-outline-danger btn-sm w-100 rounded-pill no-print mt-4" onclick="clearCurrentDay()">清空當天行程</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tripData = JSON.parse(localStorage.getItem("myTripData_V4")) || { "第 1 天": [] };
+        let currentDay = Object.keys(tripData)[0];
+
+        function initTimeSelect() {
+            const ts = document.getElementById("time");
+            for(let h=0; h<24; h++) for(let m=0; m<60; m+=10) {
+                let v = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+                ts.add(new Option(v, v));
+            }
+            ts.value = "09:00";
+        }
+
+        function renderTabs() {
+            const tabs = document.getElementById("dayTabs"); tabs.innerHTML = "";
+            Object.keys(tripData).forEach(day => {
+                const li = document.createElement("li"); li.className = "nav-item";
+                li.innerHTML = `<a class="nav-link ${day === currentDay ? 'active' : ''}" onclick="switchDay('${day}')">${day}</a>`;
+                tabs.appendChild(li);
+            });
+        }
+
+        function switchDay(day) { currentDay = day; document.getElementById("currentDayTitle").innerText = `🗓️ ${day} 行程`; renderTabs(); renderTimeline(); }
+        function addNewDay() { const n = Object.keys(tripData).length + 1; tripData[`第 ${n} 天`] = []; saveData(); switchDay(`第 ${n} 天`); }
+        function saveData() { localStorage.setItem("myTripData_V4", JSON.stringify(tripData)); }
+
+        document.getElementById("itineraryForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const time = document.getElementById("time").value, cat = document.getElementById("category").value,
+                  pla = document.getElementById("place").value, dur = parseInt(document.getElementById("duration").value) || 0,
+                  not = document.getElementById("note").value;
+            const [h, m] = time.split(':').map(Number);
+            const end = new Date(2000, 0, 1, h, m + dur).toTimeString().substring(0, 5);
+            tripData[currentDay].push({ id: Date.now(), time, endTime: end, category: cat, place: pla, duration: dur, note: not });
+            tripData[currentDay].sort((a,b) => a.time.localeCompare(b.time));
+            saveData(); renderTimeline();
+            document.getElementById("place").value = ""; document.getElementById("note").value = "";
+        });
+
+        function renderTimeline() {
+            const con = document.getElementById("timeline-container"), emp = document.getElementById("empty-state");
+            con.innerHTML = ""; const items = tripData[currentDay];
+            if (!items.length) { emp.style.display = "block"; return; }
+            emp.style.display = "none";
+            items.forEach(item => {
+                const isTrans = item.category.includes("交通");
+                let icon = isTrans ? "🚆" : (item.category.includes("景點") ? "📸" : (item.category.includes("餐廳") ? "🍽️" : "🏨"));
+                let cls = isTrans ? "transport-item" : (item.category.includes("景點") ? "spot-item" : (item.category.includes("餐廳") ? "food-item" : "hotel-item"));
+                const div = document.createElement("div"); div.className = `timeline-item ${cls}`;
+                div.innerHTML = `
+                    <div class="timeline-icon">${icon}</div>
+                    <div class="d-flex justify-content-between align-items-start ${isTrans?'bg-light border-start border-4 border-secondary p-3 rounded-3':'ps-2'}">
+                        <div class="w-100">
+                            <span class="time-badge">${item.time}-${item.endTime}</span>
+                            <h6 class="mt-1 fw-bold text-dark mb-1">${item.place}</h6>
+                            ${!isTrans ? `<div class="mb-2 no-print">
+                                <a href="https://www.google.com/search?q=${encodeURIComponent(item.place)}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" style="font-size:0.7rem">🔍資訊</a>
+                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place)}" target="_blank" class="btn btn-sm btn-primary rounded-pill py-0 px-2" style="font-size:0.7rem">🗺️地圖</a>
+                            </div>` : ''}
+                            <p class="text-muted mb-0" style="font-size:0.75rem">⏱️ ${isTrans?'車程':'停留'}: ${item.duration}分 ${item.note?` | 📝 ${item.note}`:''}</p>
+                        </div>
+                        <button class="btn btn-sm btn-link text-danger no-print p-0" onclick="deleteItem(${item.id})">✕</button>
+                    </div>`;
+                con.appendChild(div);
+            });
+        }
+        function deleteItem(id) { tripData[currentDay] = tripData[currentDay].filter(i=>i.id!==id); saveData(); renderTimeline(); }
+        function clearCurrentDay() { if(confirm("確定清空？")) { tripData[currentDay] = []; saveData(); renderTimeline(); } }
+        window.onload = function() { initTimeSelect(); renderTabs(); renderTimeline(); };
+    </script>
+</body>
+</html>
